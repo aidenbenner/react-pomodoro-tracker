@@ -42,7 +42,7 @@ class Timer extends Component {
     }
 
     tick() {
-        if(this.state.pause){
+        if(!this.state.pause){
             if (this.state.remaining > 0) {
                 let now = Date.now()
                 let dtime = (now - this.state.startTime) / 1000
@@ -55,13 +55,12 @@ class Timer extends Component {
                 audio.play()
                 this.props.onCompleteInterval({startDate: this.state.initialStartDate, name: this.state.intervalName,completedDate:moment.now()})
             }
-
         }
     }
 
     reset() {
         this.stop()
-        this.setTimerVal(this.state.resetSeconds)
+        this.setTimerVal(this.state.intervalName, this.state.resetSeconds)
     }
 
     render() {
