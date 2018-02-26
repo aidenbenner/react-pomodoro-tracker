@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import moment  from 'moment';
+import Cookies from 'universal-cookie'
 import logo from './logo.svg';
 import './App.css';
+import Particles from 'react-particles-js';
 
 class Timer extends Component {
     constructor() {
@@ -12,13 +14,16 @@ class Timer extends Component {
             resetSeconds: 25 * 60,
             startSeconds: 25 * 60,
             remaining: 25 * 60,
-            startTime: Date.now()}
+            startTime: Date.now()};
+
+        this.audio = new Audio("/alarm.mp3");
+        this.audio.volume = 0.01;
 
         this.tick.bind(this)
-        this.setTimerVal = this.setTimerVal.bind(this)
-        this.start = this.start.bind(this)
-        this.stop = this.stop.bind(this)
-        this.reset = this.reset.bind(this)
+        this.setTimerVal = this.setTimerVal.bind(this);
+        this.start = this.start.bind(this);
+        this.stop = this.stop.bind(this);
+        this.reset = this.reset.bind(this);
     }
 
     componentDidMount() {
@@ -29,38 +34,54 @@ class Timer extends Component {
         clearInterval(this.timer);
     }
 
+    stopAudio() {
+        this.audio.pause();
+        this.audio.setTime = 0
+    }
+
     setTimerVal(name, seconds){
-        this.setState({initialStartDate:moment.now(), intervalName:name, pause: true, done:false, resetSeconds: seconds, startSeconds: seconds, remaining:seconds, startTime: Date.now()})
+        this.stopAudio();
+        this.setState({initialStartDate:moment.now(),
+            intervalName:name,
+            pause: true,
+            done:false,
+            resetSeconds: seconds,
+            startSeconds: seconds,
+            remaining:seconds,
+            startTime: Date.now()});
     }
 
     start() {
-        this.setState({pause : false, startTime: Date.now()})
+        if(!this.state.pause) return;
+        this.stopAudio();
+        this.setState({pause : false, startTime: Date.now()});
     }
 
     stop() {
-        this.setState({pause : true, startSeconds:this.state.remaining})
+        this.stopAudio();
+        this.setState({pause : true, startSeconds:this.state.remaining});
     }
 
     tick() {
         if(!this.state.pause){
             if (this.state.remaining > 0) {
-                let now = Date.now()
-                let dtime = (now - this.state.startTime) / 1000
-                this.setState({remaining:Math.max(0, this.state.startSeconds - dtime)})
+                let now = Date.now();
+                let dtime = (now - this.state.startTime) / 1000;
+                this.setState({remaining:Math.max(0, this.state.startSeconds - dtime)});
             }
             if(this.state.remaining == 0 && !this.state.done){
-                this.setState({done: true})
-                let audio = new Audio("/alarm.mp3")
-                audio.volume = 0.01
-                audio.play()
-                this.props.onCompleteInterval({startDate: this.state.initialStartDate, name: this.state.intervalName,completedDate:moment.now()})
+                this.setState({done: true});
+                this.audio.play();
+                this.props.onCompleteInterval({startDate: this.state.initialStartDate,
+                    name: this.state.intervalName,
+                    completedDate:moment.now()});
             }
         }
     }
 
     reset() {
-        this.stop()
-        this.setTimerVal(this.state.intervalName, this.state.resetSeconds)
+        this.stop();
+        this.setTimerVal(this.state.intervalName, this.state.resetSeconds);
     }
 
     render() {
@@ -88,7 +109,7 @@ function formatNum(x) {
 
 class TimerText extends Component {
     getTime() {
-        return Math.floor(this.props.time / 60) + ":" + formatNum(Math.floor(this.props.time % 60))
+        return Math.floor(this.props.time / 60) + ":" + formatNum(Math.floor(this.props.time % 60));
     }
 
 
@@ -112,7 +133,9 @@ class PomodoroLog extends Component {
             const logList = logs.map((x) => {
                     return (
                         <li key={x.completedDate}>
-                            <p>{x.name} - {moment(x.startDate).format("LTS") + " " + moment(x.completedDate).format("LTS")} </p>
+                            <p>{x.name} - {moment(x.startDate).format("LTS")
+                            + " "
+                            + moment(x.completedDate).format("LTS")} </p>
                         </li>
                     )
             });
@@ -136,17 +159,21 @@ class PomodoroLog extends Component {
 
 class App extends Component {
     constructor() {
-        super()
-        this.completePomodoro = this.completePomodoro.bind(this)
-        this.state = {}
-        this.state.history = []
+        super();
+        this.state = {};
+        this.state.history = [];
+        this.completePomodoro = this.completePomodoro.bind(this);
+        this.clearHistory = this.clearHistory.bind(this);
     }
 
-
     completePomodoro(hist) {
-        let newHistory = this.state.history.slice()
-        newHistory.push(hist)
+        let newHistory = this.state.history.slice();
+        newHistory.push(hist);
         this.setState({history: newHistory})
+    }
+
+    clearHistory() {
+        this.setState({history: []})
     }
 
     render() {
@@ -154,6 +181,8 @@ class App extends Component {
             <div className="App">
                 <Timer onCompleteInterval={this.completePomodoro}/>
                 <PomodoroLog history={this.state.history}/>
+                <button className="clear-history" onClick={this.clearHistory}> Clear </button>
+                <Particles />
             </div>
         );
     }
