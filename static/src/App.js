@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import moment  from 'moment';
-import Cookies from 'universal-cookie'
 import logo from './logo.svg';
 import './App.css';
 import Particles from 'react-particles-js';
+import Cookies from 'universal-cookie';
 
 class Timer extends Component {
     constructor() {
@@ -158,22 +158,30 @@ class PomodoroLog extends Component {
 }
 
 class App extends Component {
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
+        this.cookies = new Cookies()
         this.state = {};
-        this.state.history = [];
+        this.state.history = this.cookies.get('history') || []
         this.completePomodoro = this.completePomodoro.bind(this);
         this.clearHistory = this.clearHistory.bind(this);
+        this.updateCookies = this.updateCookies.bind(this);
     }
 
     completePomodoro(hist) {
         let newHistory = this.state.history.slice();
         newHistory.push(hist);
         this.setState({history: newHistory})
+        this.updateCookies()
+    }
+
+    updateCookies() {
+        this.cookies.set('history', this.state.history,  {path: "/"});
     }
 
     clearHistory() {
         this.setState({history: []})
+        this.updateCookies()
     }
 
     render() {
