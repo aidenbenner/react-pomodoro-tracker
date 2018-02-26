@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "chart.js": "^1.1.1",
     "moment": "^2.20.1",
     "particles": "^0.3.1",
     "particles.js": "^2.0.0",
     "react": "^16.2.0",
+    "react-chartjs": "^1.2.0",
     "react-cookie": "^2.1.4",
     "react-dom": "^16.2.0",
     "react-particles-js": "^2.1.0",

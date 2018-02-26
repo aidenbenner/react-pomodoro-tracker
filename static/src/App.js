@@ -5,6 +5,8 @@ import './App.css';
 import Particles from 'react-particles-js';
 import Cookies from 'universal-cookie';
 
+var LineChart = require("react-chartjs").Line;
+
 class Timer extends Component {
     constructor() {
         super()
@@ -123,8 +125,8 @@ class TimerText extends Component {
 }
 
 class PomodoroLog extends Component {
-    constructor() {
-        super()
+    constructor(props) {
+        super(props)
     }
 
     render() {
@@ -141,7 +143,7 @@ class PomodoroLog extends Component {
             });
 
             return (
-                <div>
+                <div className={this.props.className}>
                     <p> History </p>
                     <ul>
                         {logList}
@@ -150,12 +152,34 @@ class PomodoroLog extends Component {
             )
         }
         return (
-            <div>
+            <div className={this.props.className}>
                 <p> History </p>
             </div>
         )
     }
 }
+
+function weekChartData(d){
+    return {
+        labels: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        datasets: [
+            {
+                fillColor: "rgba(220,220,220,0.2)",
+                strokeColor: "rgba(220,220,220,1)",
+                pointColor: "rgba(220,220,220,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(220,220,220,1)",
+                data: d
+            }
+        ]
+    }
+}
+
+
+const coptions = {
+    scaleFontColor: "#FFFFFF"
+};
 
 class App extends Component {
     constructor(props) {
@@ -163,15 +187,37 @@ class App extends Component {
         this.cookies = new Cookies()
         this.state = {};
         this.state.history = this.cookies.get('history') || []
+        this.state.chartData = this.getChartDataFromHistory()
+        this.state.daily = this.state.chartData[moment(moment.now()).day()]
         this.completePomodoro = this.completePomodoro.bind(this);
         this.clearHistory = this.clearHistory.bind(this);
         this.updateCookies = this.updateCookies.bind(this);
+        this.getChartDataFromHistory = this.getChartDataFromHistory.bind(this);
+    }
+
+    updateChart() {
+        this.setState({chartData:this.getChartDataFromHistory()})
+        this.setState({daily:this.state.chartData[moment(moment.now()).day()]})
+    }
+
+
+    getChartDataFromHistory() {
+        let dSet = [0,0,0,0,0,0,0,0];
+        for(var i = 0; i<this.state.history.length; i++){
+            //get all in the past week
+            let d = this.state.history[i].completeDate;
+            let cDay = moment(d).day();
+            console.log("DAY" + cDay);
+            dSet[cDay]++;
+        }
+        return dSet;
     }
 
     completePomodoro(hist) {
         let newHistory = this.state.history.slice();
         newHistory.push(hist);
         this.setState({history: newHistory})
+        this.updateChart()
         this.updateCookies()
     }
 
@@ -180,17 +226,21 @@ class App extends Component {
     }
 
     clearHistory() {
-        this.setState({history: []})
+        this.setState({history:[], chartData:[0,0,0,0,0,0,0], daily:0})
         this.updateCookies()
     }
 
     render() {
+        //  <Particles className="particles"/>
         return (
             <div className="App">
                 <Timer onCompleteInterval={this.completePomodoro}/>
-                <PomodoroLog history={this.state.history}/>
+                <div className={"charts"}>
+                    <p> Today you have completed {this.state.daily} pomodoros </p>
+                    <LineChart data={weekChartData(this.state.chartData)} options={coptions} width="600" height="250"/>
+                </div>
+                <PomodoroLog className='history' history={this.state.history}/>
                 <button className="clear-history" onClick={this.clearHistory}> Clear </button>
-                <Particles />
             </div>
         );
     }
